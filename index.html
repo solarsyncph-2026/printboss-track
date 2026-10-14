@@ -10,9 +10,10 @@
   :root {
     --bg: #f6f6f7; --card: #ffffff; --text: #18181b; --muted: #71717a; --line: #e4e4e7;
     --orange: #f97316; --orange-soft: #fff7ed; --green: #10b981; --green-soft: #ecfdf5; --red: #ef4444;
+    --mark: url(printboss-mono.png);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0c0c0e; --card: #18181b; --text: #f4f4f5; --muted: #a1a1aa; --line: #27272a; --orange-soft: #2a1608; --green-soft: #062a20; }
+    :root { --bg: #0c0c0e; --card: #18181b; --text: #f4f4f5; --muted: #a1a1aa; --line: #27272a; --orange-soft: #2a1608; --green-soft: #062a20; --mark: url(printboss-mono-dark.png); }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -39,21 +40,70 @@
   .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
   .row:first-of-type { border-top: 0; }
   .row span:first-child { color: var(--muted); }
-  .row b { text-align: right; }
+  .row b { text-align: right; white-space: nowrap; }
+  .item { padding: 10px 0; border-top: 1px solid var(--line); }
+  .item:first-of-type { border-top: 0; }
+  .item .top { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; }
+  .item .top b { white-space: nowrap; }
+  .item .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
   .balance b { color: var(--orange); }
   .paid b { color: var(--green); }
-  .actions { display: flex; gap: 10px; }
-  .btn { flex: 1; text-align: center; padding: 12px; border-radius: 14px; font-weight: 700; text-decoration: none; color: #fff; background: var(--orange); }
+  .actions { display: flex; gap: 10px; margin-bottom: 10px; }
+  .btn { flex: 1; text-align: center; padding: 12px; border-radius: 14px; font-weight: 700; text-decoration: none; color: #fff; background: var(--orange); border: 0; font: inherit; font-weight: 700; cursor: pointer; }
   .btn.alt { background: #1877f2; }
-  .foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 22px; }
-  .foot a { color: var(--orange); font-weight: 700; text-decoration: none; }
+  .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 26px; color: var(--muted); font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
+  .foot i { width: 18px; height: 26px; background: var(--mark) center / contain no-repeat; }
   .msg { text-align: center; padding: 60px 10px; color: var(--muted); }
   .updated { text-align: center; color: var(--muted); font-size: 12px; }
+
+  /* Invoice (always light, like a printed page) */
+  .sheet { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; flex-direction: column; z-index: 10; }
+  .sheet.open { display: flex; }
+  .sheet .scroll { flex: 1; overflow: auto; padding: 16px; }
+  .sheet .bar { display: flex; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
+  .inv { width: 100%; max-width: 440px; margin: 0 auto; background: #fff; color: #111; padding: 28px 24px; border-radius: 6px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .inv .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 14px; margin-bottom: 18px; }
+  .inv .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .inv .brand img, .inv .brand .logo { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex: none; }
+  .inv .brand h3 { margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: -.02em; line-height: 1.1; }
+  .inv .brand p, .inv .label { margin: 3px 0 0; font-size: 10px; color: #6b7280; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+  .inv .jo { text-align: right; flex: none; }
+  .inv .jo b { display: block; font-size: 17px; }
+  .inv .jo span { font-size: 12px; color: #6b7280; }
+  .inv .bill { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+  .inv .bill b { display: block; font-size: 16px; margin-top: 2px; }
+  .inv table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 14px; }
+  .inv th { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #6b7280; text-align: left; border-bottom: 2px solid #e5e7eb; padding: 6px 0; }
+  .inv td { padding: 8px 0; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+  .inv td small { display: block; color: #6b7280; }
+  .inv .r { text-align: right; } .inv .c { text-align: center; }
+  .inv .totals { margin-left: auto; width: 62%; font-size: 13px; }
+  .inv .totals div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .inv .totals .due { border-top: 2px solid #111; margin-top: 6px; padding-top: 8px; font-weight: 900; }
+  .inv .totals .due b { font-size: 19px; }
+  .inv .pills { display: flex; gap: 6px; margin: 16px 0; }
+  .inv .pills span { font-size: 9px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 4px 7px; }
+  .inv .qr { display: flex; align-items: center; gap: 12px; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px; }
+  .inv .qr img { width: 84px; height: 84px; flex: none; image-rendering: pixelated; }
+  .inv .qr b { display: block; font-size: 14px; }
+  .inv .qr small { color: #6b7280; font-size: 11px; }
+  .inv .pb { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 22px; color: #6b7280; font-size: 12px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
+  .inv .pb img { height: 24px; width: auto; }
 </style>
 </head>
 <body>
 <main id="app"><p class="msg">Loading your order…</p></main>
+<div class="sheet" id="sheet">
+  <div class="scroll"><div class="inv" id="invoice"></div></div>
+  <div class="bar">
+    <button class="btn ghost" onclick="closeInvoice()">Close</button>
+    <button class="btn" id="saveBtn" onclick="saveInvoice()">Save invoice</button>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const API = 'https://gxkvgkeprbqjsrmgfvmd.supabase.co/functions/v1/track-order';
 const token = new URLSearchParams(location.search).get('t') || '';
@@ -61,8 +111,21 @@ const app = document.getElementById('app');
 const peso = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const day = d => d ? new Date(d).toLocaleDateString('en-PH', { weekday: 'short', month: 'long', day: 'numeric' }) : '';
+const date = d => d ? new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+let order = null;
+
+function qrSrc(text) {
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  return q.createDataURL(6, 1);
+}
+
+function logoHtml(shop, cls) {
+  const initial = (shop.name || 'P').trim().charAt(0).toUpperCase();
+  return shop.logo_url ? `<img class="${cls}" src="${esc(shop.logo_url)}" crossorigin="anonymous" alt="">` : `<div class="logo">${esc(initial)}</div>`;
+}
 
 function render(o) {
+  order = o;
   document.title = `${o.job_number} · ${o.shop?.name || 'Order status'}`;
   const delivery = /deliver/i.test(o.delivery_method || '');
   const step = o.status === 'Done' ? 3 : o.status === 'In Progress' ? 2 : 1;
@@ -73,13 +136,12 @@ function render(o) {
       : `<div class="big">📋 We received your order<small>${o.due_date ? 'Target date: ' + esc(day(o.due_date)) : 'It\'s in line for printing.'}</small></div>`;
   const s = (n, label) => `<div class="step ${step > n ? 'ok' : step === n ? 'on' : ''}"><div class="dot">${step > n ? '✓' : n}</div>${label}</div>`;
   const shop = o.shop || {};
-  const initial = (shop.name || 'P').trim().charAt(0).toUpperCase();
   const messenger = shop.messenger ? `https://m.me/${encodeURIComponent(String(shop.messenger).replace(/^@/, '').replace(/^https?:\/\/(www\.)?(m\.me|facebook\.com)\//, ''))}` : '';
   const phone = String(shop.phone || '').replace(/[^\d+]/g, '');
 
   app.innerHTML = `
     <div class="shop">
-      ${shop.logo_url ? `<img class="logo" src="${esc(shop.logo_url)}" alt="">` : `<div class="logo">${esc(initial)}</div>`}
+      ${logoHtml(shop, 'logo')}
       <div><h1>${esc(shop.name || 'Print shop')}</h1><p>${esc([shop.address, shop.city].filter(Boolean).join(', '))}</p></div>
     </div>
     <div class="card">
@@ -88,16 +150,65 @@ function render(o) {
       ${big}
       <div class="steps">${s(1, 'Received')}${s(2, 'Printing')}${s(3, 'Ready')}</div>
     </div>
-    ${o.items?.length ? `<div class="card"><h2>Items</h2>${o.items.map(i => `<div class="row"><span>${esc(i.name)}</span><b>× ${esc(i.copies)}</b></div>`).join('')}</div>` : ''}
+    ${o.items?.length ? `<div class="card"><h2>Items</h2>${o.items.map(i => `
+      <div class="item">
+        <div class="top"><span>${esc(i.name)}</span><b>${peso(i.amount)}</b></div>
+        <div class="sub">${esc(i.copies)} × ${peso(i.unit_price)}</div>
+      </div>`).join('')}</div>` : ''}
     <div class="card">
       <h2>Payment</h2>
       <div class="row"><span>Total</span><b>${peso(o.total)}</b></div>
-      <div class="row"><span>Paid</span><b>${peso(o.paid)}</b></div>
+      <div class="row"><span>Paid${o.payment_method ? ` (${esc(o.payment_method)})` : ''}</span><b>${peso(o.paid)}</b></div>
       <div class="row ${o.balance > 0 ? 'balance' : 'paid'}"><span>${o.balance > 0 ? 'Balance' : 'Fully paid'}</span><b>${o.balance > 0 ? peso(o.balance) : '✓'}</b></div>
     </div>
+    <div class="actions"><button class="btn ghost" onclick="openInvoice()">🧾 View / save invoice</button></div>
     ${phone || messenger ? `<div class="actions">${phone ? `<a class="btn" href="tel:${esc(phone)}">📞 Call shop</a>` : ''}${messenger ? `<a class="btn alt" href="${esc(messenger)}">💬 Message</a>` : ''}</div>` : ''}
     <p class="updated">Updated ${new Date().toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })} · refreshes automatically</p>
-    <p class="foot">Order tracking by <a href="https://printboss.pro">PrintBoss</a></p>`;
+    <a class="foot" href="https://printboss.pro"><i></i>Powered by PrintBoss</a>`;
+}
+
+function invoiceHtml(o) {
+  const shop = o.shop || {};
+  const rows = (o.items || []).map(i => `<tr><td>${esc(i.name)}<small>@ ${peso(i.unit_price)} each</small></td><td class="c">${esc(i.copies)}</td><td class="r">${peso(i.amount)}</td></tr>`).join('')
+    || '<tr><td colspan="3" class="c"><small>No items listed.</small></td></tr>';
+  return `
+    <div class="head">
+      <div class="brand">${logoHtml(shop, '')}<div><h3>${esc(shop.name || 'Print shop')}</h3><p>Official invoice</p></div></div>
+      <div class="jo"><b>${esc(o.job_number)}</b><span>${esc(date(o.created_at))}</span></div>
+    </div>
+    ${o.customer_first_name ? `<div class="bill"><div class="label">Bill to</div><b>${esc(o.customer_first_name)}</b></div>` : ''}
+    <table><thead><tr><th>Item</th><th class="c">Qty</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="totals">
+      <div><span>Subtotal</span><span>${peso(o.total)}</span></div>
+      ${o.is_rush ? '<div style="color:#ef4444"><span>Rush surcharge</span><span>Included</span></div>' : ''}
+      <div><span>Amount paid</span><span>${peso(o.paid)}</span></div>
+      <div class="due"><span>Balance due</span><b>${peso(o.balance)}</b></div>
+    </div>
+    <div class="pills"><span>${esc(o.payment_status || '')}</span><span>${esc(o.delivery_method || '')}</span></div>
+    <div class="qr"><img src="${qrSrc(location.href)}" alt=""><div><b>Scan to track your order</b><small>See if it's printing or ready for ${/deliver/i.test(o.delivery_method || '') ? 'delivery' : 'pickup'}, and your balance, anytime.</small></div></div>
+    <div class="pb"><img src="printboss-mono.png" alt="">Powered by PrintBoss</div>`;
+}
+
+function openInvoice() {
+  if (!order) return;
+  document.getElementById('invoice').innerHTML = invoiceHtml(order);
+  document.getElementById('sheet').classList.add('open');
+}
+function closeInvoice() { document.getElementById('sheet').classList.remove('open'); }
+async function saveInvoice() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const canvas = await html2canvas(document.getElementById('invoice'), { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const a = document.createElement('a');
+    a.download = `${(order.shop?.name || 'Shop').replace(/[^\w]+/g, '_')}_Invoice_${order.job_number}.png`;
+    a.href = canvas.toDataURL('image/png');
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch {
+    alert('Couldn\'t save the invoice. You can take a screenshot instead.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save invoice';
+  }
 }
 
 async function load() {
@@ -112,7 +223,7 @@ async function load() {
   }
 }
 load();
-setInterval(load, 60000);
+setInterval(() => { if (!document.getElementById('sheet').classList.contains('open')) load(); }, 60000);
 </script>
 </body>
 </html>
