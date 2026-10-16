@@ -61,6 +61,12 @@
   /* Invoice (always light, like a printed page) */
   .sheet { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; flex-direction: column; z-index: 10; }
   .sheet.open { display: flex; }
+  .saved { position: fixed; inset: 0; background: rgba(0,0,0,.94); display: none; flex-direction: column; align-items: center; z-index: 20; padding: 16px; }
+  .saved.open { display: flex; }
+  .saved p { color: #fff; font-size: 14px; text-align: center; margin: 4px 0 12px; line-height: 1.4; }
+  .saved img { max-width: 100%; max-height: calc(100vh - 170px); border-radius: 8px; background: #fff; -webkit-touch-callout: default; user-select: auto; }
+  .saved .row { display: flex; gap: 10px; margin-top: 14px; width: 100%; max-width: 420px; }
+  .saved .row .btn { flex: 1; }
   .sheet .scroll { flex: 1; overflow: auto; padding: 16px; }
   .sheet .bar { display: flex; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
   .inv { width: 100%; max-width: 440px; margin: 0 auto; background: #fff; color: #111; padding: 28px 24px; border-radius: 6px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -95,6 +101,14 @@
 </head>
 <body>
 <main id="app"><p class="msg">Loading your order…</p></main>
+<div class="saved" id="saved">
+  <p id="savedHint">Press and hold the invoice, then choose <b>Save image</b> or <b>Download image</b>.</p>
+  <img id="savedImg" alt="Invoice">
+  <div class="row">
+    <button class="btn ghost" onclick="document.getElementById('saved').classList.remove('open')">Close</button>
+    <a class="btn" id="savedDl" download>Download</a>
+  </div>
+</div>
 <div class="sheet" id="sheet">
   <div class="scroll"><div class="inv" id="invoice"></div></div>
   <div class="bar">
@@ -198,16 +212,46 @@ function openInvoice() {
   document.getElementById('sheet').classList.add('open');
 }
 function closeInvoice() { document.getElementById('sheet').classList.remove('open'); }
+// Messenger / Facebook / Instagram in-app browsers block downloads; there the image is shown to press and hold.
+const IN_APP = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\/|MicroMessenger/i.test(navigator.userAgent);
+let savedUrl = null;
+
 async function saveInvoice() {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     const canvas = await html2canvas(document.getElementById('invoice'), { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-    const a = document.createElement('a');
-    a.download = `${(order.shop?.name || 'Shop').replace(/[^\w]+/g, '_')}_Invoice_${order.job_number}.png`;
-    a.href = canvas.toDataURL('image/png');
-    document.body.appendChild(a); a.click(); a.remove();
-  } catch {
+    const blob = await new Promise((resolve, reject) => canvas.toBlob(b => (b ? resolve(b) : reject(new Error('empty'))), 'image/png'));
+    const name = `${(order.shop?.name || 'Shop').replace(/[^\w]+/g, '_')}_Invoice_${order.job_number}.png`;
+    const file = new File([blob], name, { type: 'image/png' });
+
+    // 1. Phones: the share sheet (Save image, Gallery, Messenger...)
+    if (!IN_APP && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: `Invoice ${order.job_number}` }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+
+    if (savedUrl) URL.revokeObjectURL(savedUrl);
+    savedUrl = URL.createObjectURL(blob);
+    // 2. Computers: a normal download
+    if (!IN_APP && !/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      const a = document.createElement('a');
+      a.download = name; a.href = savedUrl;
+      document.body.appendChild(a); a.click(); a.remove();
+      return;
+    }
+    // 3. Everywhere else: show the image to press and hold (data URL so the long-press menu can save it)
+    const img = document.getElementById('savedImg');
+    img.src = canvas.toDataURL('image/png');
+    const dl = document.getElementById('savedDl');
+    dl.href = savedUrl; dl.download = name;
+    dl.style.display = IN_APP ? 'none' : '';
+    document.getElementById('savedHint').innerHTML = IN_APP
+      ? 'Press and hold the invoice, then choose <b>Save image</b>. Or open this page in Chrome or Safari to download it.'
+      : 'Press and hold the invoice, then choose <b>Save image</b> or <b>Download image</b>.';
+    document.getElementById('saved').classList.add('open');
+  } catch (err) {
+    console.error(err);
     alert('Couldn\'t save the invoice. You can take a screenshot instead.');
   } finally {
     btn.disabled = false; btn.textContent = 'Save invoice';
