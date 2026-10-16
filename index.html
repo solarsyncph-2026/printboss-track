@@ -157,6 +157,7 @@ function render(o) {
       </div>`).join('')}</div>` : ''}
     <div class="card">
       <h2>Payment</h2>
+      ${o.discount ? `<div class="row"><span>Discount${o.discount.reason ? ` (${esc(o.discount.reason)})` : ''}</span><b>−${peso(o.discount.amount)}</b></div>` : ''}
       <div class="row"><span>Total</span><b>${peso(o.total)}</b></div>
       <div class="row"><span>Paid${o.payment_method ? ` (${esc(o.payment_method)})` : ''}</span><b>${peso(o.paid)}</b></div>
       <div class="row ${o.balance > 0 ? 'balance' : 'paid'}"><span>${o.balance > 0 ? 'Balance' : 'Fully paid'}</span><b>${o.balance > 0 ? peso(o.balance) : '✓'}</b></div>
@@ -179,8 +180,10 @@ function invoiceHtml(o) {
     ${o.customer_first_name ? `<div class="bill"><div class="label">Bill to</div><b>${esc(o.customer_first_name)}</b></div>` : ''}
     <table><thead><tr><th>Item</th><th class="c">Qty</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="totals">
-      <div><span>Subtotal</span><span>${peso(o.total)}</span></div>
+      <div><span>Subtotal</span><span>${peso(o.total + (o.discount ? o.discount.amount : 0))}</span></div>
       ${o.is_rush ? '<div style="color:#ef4444"><span>Rush surcharge</span><span>Included</span></div>' : ''}
+      ${o.discount ? `<div style="color:#059669"><span>Discount${o.discount.reason ? ` (${esc(o.discount.reason)})` : ''}</span><span>−${peso(o.discount.amount)}</span></div>
+      <div><span>Total</span><span>${peso(o.total)}</span></div>` : ''}
       <div><span>Amount paid</span><span>${peso(o.paid)}</span></div>
       <div class="due"><span>Balance due</span><b>${peso(o.balance)}</b></div>
     </div>
